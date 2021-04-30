@@ -1,8 +1,8 @@
-from datetime import datetime, timezone
 import logging
+from datetime import datetime, timezone
 from typing import List, Optional
 
-from pigeon_db.pigeon import User, Conversation, Message
+from pigeon_db.pigeon import Conversation, Message, User
 
 from .base_manager import BaseManager
 

@@ -3,8 +3,8 @@ import logging
 from flask import request
 from flask_restful import Resource
 from pigeon_core.pigeon_managers import PigeonManager
-from summ_web import responses
 from slack_sdk.signature import SignatureVerifier
+from summ_web import responses
 
 from .. import app, db
 
@@ -21,7 +21,8 @@ class WebhookController(Resource):
         if not signature_verifier.is_valid(
             body=request.get_data(),
             timestamp=request.headers.get("X-Slack-Request-Timestamp"),
-            signature=request.headers.get("X-Slack-Signature")):
+            signature=request.headers.get("X-Slack-Signature"),
+        ):
             return responses.error("Invalid request", status_code=403, error_code=None)
 
         wrapped_event = request.get_json()
@@ -34,18 +35,22 @@ class WebhookController(Resource):
         event_type = event.get("type")
         event_subtype = event.get("subtype")
         if event_type == "message" and event_subtype == "im":
-            conversation_id = event['channel']
-            user_id = event['user']
-            text = event['text']
-            ts = event['ts']
+            conversation_id = event["channel"]
+            user_id = event["user"]
+            text = event["text"]
+            ts = event["ts"]
             conversation = pigeon_manager.get_conversation(conversation_id)
             user = pigeon_manager.get_user(user_id)
             if not user:
                 user = pigeon_manager.create_user(user_id)
             if not conversation:
-                conversation = pigeon_manager.create_conversation(conversation_id, user_id)
-            message = pigeon_manager.upsert_message(ts, conversation, user_id, text])
+                conversation = pigeon_manager.create_conversation(
+                    conversation_id, user_id
+                )
+            message = pigeon_manager.upsert_message(ts, conversation, user_id, text)
             pigeon_manager.commit_changes()
             return responses.success("Ok")
         else:
-            responses.error("Invalid request, unknown code", status_code=422, error_code=None)
+            responses.error(
+                "Invalid request, unknown code", status_code=422, error_code=None
+            )

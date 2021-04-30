@@ -5,7 +5,6 @@ import AuthPage from "./pages/auth/AuthPage"
 import HomePage from "./pages/HomePage"
 import NotFound404Page from "./pages/misc/NotFound404Page"
 import RedirectPage from "./pages/misc/RedirectPage"
-import {getUserHome} from "./store/actions/user"
 
 type FlokRoute = {
   name: string
@@ -123,7 +122,7 @@ export default function Stack() {
 
   useEffect(() => {
     /** Helps determine user login status */
-    dispatch(getUserHome())
+    // dispatch(getUserHome())
   }, [dispatch, loginStatus])
 
   return <Switch>{routes}</Switch>

@@ -1,6 +1,2 @@
-import userReducer from "./user"
-
-const reducers = {
-  user: userReducer,
-}
+const reducers = {}
 export default reducers

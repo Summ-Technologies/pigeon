@@ -17,7 +17,7 @@ signature_verifier = SignatureVerifier(
 
 
 class WebhookController(Resource):
-    def post(self, get_args):
+    def post(self):
         if not signature_verifier.is_valid(
             body=request.get_data(),
             timestamp=request.headers.get("X-Slack-Request-Timestamp"),

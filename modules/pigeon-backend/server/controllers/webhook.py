@@ -26,31 +26,64 @@ class WebhookController(Resource):
             return responses.error("Invalid request", status_code=403, error_code=None)
 
         wrapped_event = request.get_json()
+        logger.error(wrapped_event)
 
         challenge = wrapped_event.get("challenge")
         if challenge:
             return responses.success({"challenge": challenge})
 
+        wrapped_event_type = wrapped_event.get("type")
         event = wrapped_event.get("event", {})
-        event_type = event.get("type")
-        event_subtype = event.get("subtype")
-        if event_type == "message" and event_subtype == "im":
-            conversation_id = event["channel"]
-            user_id = event["user"]
-            text = event["text"]
-            ts = event["ts"]
-            conversation = pigeon_manager.get_conversation(conversation_id)
-            user = pigeon_manager.get_user(user_id)
-            if not user:
-                user = pigeon_manager.create_user(user_id)
-            if not conversation:
-                conversation = pigeon_manager.create_conversation(
-                    conversation_id, user_id
+        if (
+            wrapped_event_type == "event_callback"
+            and event.get("type") == "message"
+            and event.get("channel_type") == "im"
+        ):
+            message_subtype = event.get("subtype")
+            if message_subtype == None:
+                conversation_id = event["channel"]
+                user_id = event["user"]
+                text = event["text"]
+                ts = event["ts"]
+                conversation = pigeon_manager.get_conversation(conversation_id)
+                user = pigeon_manager.get_user(user_id)
+                if not user:
+                    user = pigeon_manager.create_user(user_id)
+                if not conversation:
+                    conversation = pigeon_manager.create_conversation(
+                        conversation_id, user_id
+                    )
+                pigeon_manager.upsert_message(ts, conversation, user_id, text)
+                pigeon_manager.commit_changes()
+                return responses.success("Ok")
+            elif message_subtype == "message_deleted":
+                return responses.error(
+                    "Can't handle subtype: message_deleted",
+                    status_code=422,
+                    error_code=None,
                 )
-            message = pigeon_manager.upsert_message(ts, conversation, user_id, text)
-            pigeon_manager.commit_changes()
-            return responses.success("Ok")
+            elif message_subtype == "message_changed":
+                conversation_id = event["channel"]
+                event_message = event["message"]
+                user_id = event_message["user"]
+                text = event_message["text"]
+                ts = event_message["ts"]
+                conversation = pigeon_manager.get_conversation(conversation_id)
+                user = pigeon_manager.get_user(user_id)
+                if not user:
+                    user = pigeon_manager.create_user(user_id)
+                if not conversation:
+                    conversation = pigeon_manager.create_conversation(
+                        conversation_id, user_id
+                    )
+                pigeon_manager.upsert_message(ts, conversation, user_id, text)
+                pigeon_manager.commit_changes()
+                return responses.success("Ok")
+            else:
+                return responses.error(
+                    "Can't handle subtype", status_code=422, error_code=None
+                )
         else:
-            responses.error(
+            return responses.error(
                 "Invalid request, unknown code", status_code=422, error_code=None
             )

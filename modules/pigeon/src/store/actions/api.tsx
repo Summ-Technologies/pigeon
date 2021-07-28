@@ -75,10 +75,17 @@ export class ApiUtils {
   static typeWithMeta(type: string, meta: any) {
     return {type, meta: () => meta}
   }
-  static listToDict(apiResponse: Array<{id: number; [key: string]: any}>) {
-    var d: {[key: number]: any} = {}
+  static listToDict(apiResponse: Array<{id: string; [key: string]: any}>) {
+    var d: {[key: string]: any} = {}
     apiResponse.forEach((resource) => {
       d[resource.id] = resource
+    })
+    return d
+  }
+  static listToDictTs(apiResponse: Array<{ts: string; [key: string]: any}>) {
+    var d: {[key: string]: any} = {}
+    apiResponse.forEach((resource) => {
+      d[resource.ts] = resource
     })
     return d
   }

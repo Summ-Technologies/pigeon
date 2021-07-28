@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone
 from typing import List, Optional
 
+from pigeon_core.slack_client import SlackClient
 from pigeon_db.pigeon import Conversation, Message, User
 
 from .base_manager import BaseManager
@@ -14,10 +15,12 @@ class PigeonManager(BaseManager):
         """
         Required config values:
         """
-        pass
 
     def get_user(self, user_id: str) -> Optional[User]:
         return self.session.query(User).get(user_id)
+
+    def get_users(self) -> List[User]:
+        return self.session.query(User).all()
 
     def create_user(
         self,
@@ -65,8 +68,22 @@ class PigeonManager(BaseManager):
             self.session.flush()
         return message
 
+    def get_messages(self, conversation: Conversation, page: int = 0):
+        page_size = 30
+        return (
+            self.session.query(Message)
+            .filter(Message.conversation_id == conversation.id)
+            .order_by(Message.ts.desc())
+            .limit(page_size)
+            .offset(page_size * page)
+            .all()
+        )
+
     def get_conversation(self, conversation_id: str) -> Optional[Conversation]:
         return self.session.query(Conversation).get(conversation_id)
+
+    def get_conversations(self) -> List[Conversation]:
+        return self.session.query(Conversation).all()
 
     def create_conversation(self, id: str, user_id: str):
         new_conversation = Conversation()
